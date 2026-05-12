@@ -1,0 +1,52 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-gray-50 text-gray-900 antialiased;
+  }
+
+  /* Dark mode — áp dụng khi <html class="dark"> */
+  .dark body {
+    @apply bg-gray-900 text-gray-100;
+  }
+}
+
+/* Dark mode overrides cho các Tailwind class phổ biến —
+   giúp toàn bộ app tự động tối màu mà không cần sửa từng component */
+.dark .bg-white         { background-color: rgb(31 41 55);  }   /* gray-800 */
+.dark .bg-gray-50       { background-color: rgb(17 24 39);  }   /* gray-900 */
+.dark .bg-gray-100      { background-color: rgb(55 65 81);  }   /* gray-700 */
+.dark .bg-gray-200      { background-color: rgb(75 85 99);  }   /* gray-600 */
+.dark .text-gray-900    { color: rgb(243 244 246);          }   /* gray-100 */
+.dark .text-gray-800    { color: rgb(229 231 235);          }   /* gray-200 */
+.dark .text-gray-700    { color: rgb(209 213 219);          }   /* gray-300 */
+.dark .text-gray-600    { color: rgb(156 163 175);          }   /* gray-400 */
+.dark .text-gray-500    { color: rgb(107 114 128);          }   /* gray-500 (giữ nguyên) */
+.dark .border-gray-200  { border-color: rgb(55 65 81);      }   /* gray-700 */
+.dark .border-gray-100  { border-color: rgb(55 65 81);      }   /* gray-700 */
+.dark .divide-gray-100 > * + * { border-color: rgb(55 65 81); }
+
+@layer components {
+  /* Badge trạng thái đặt chỗ */
+  .badge {
+    @apply inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium;
+  }
+  .badge-pending   { @apply bg-orange-100 text-orange-700; }
+  .badge-confirmed { @apply bg-blue-100 text-blue-800; }
+  .badge-seated    { @apply bg-green-100 text-green-800; }
+  .badge-completed { @apply bg-gray-100 text-gray-600; }
+  .badge-cancelled { @apply bg-red-100 text-red-700; }
+  .badge-no_show   { @apply bg-orange-100 text-orange-700; }
+
+  /* Nút hành động */
+  .btn {
+    @apply inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium
+           transition-colors disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+  .btn-primary  { @apply bg-blue-600 text-white hover:bg-blue-700; }
+  .btn-success  { @apply bg-green-600 text-white hover:bg-green-700; }
+  .btn-danger   { @apply bg-red-600 text-white hover:bg-red-700; }
+  .btn-ghost    { @apply bg-white text-gray-700 border border-gray-200 hover:bg-gray-50; }
+}

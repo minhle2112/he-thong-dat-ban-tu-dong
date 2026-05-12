@@ -1,0 +1,124 @@
+### Kiểm tra server
+GET http://localhost:3000/api/health
+
+###
+
+### Lấy danh sách nhà hàng
+GET http://localhost:3000/api/restaurants
+
+###
+
+### Chi tiết nhà hàng 1
+GET http://localhost:3000/api/restaurants/1
+
+###
+
+### Danh sách bàn nhà hàng 1
+GET http://localhost:3000/api/restaurants/1/tables
+
+###
+
+### Danh sách bàn khu A
+GET http://localhost:3000/api/restaurants/1/tables?zone=Khu%20A
+
+###
+
+### ─── ĐẶT BÀN (quan trọng nhất) ───────────────────────────────
+
+### Đặt bàn 2 người — hệ thống tự chọn bàn nhỏ nhất phù hợp
+POST http://localhost:3000/api/reservations
+Content-Type: application/json
+
+{
+  "restaurant_id": 1,
+  "date": "2026-05-20",
+  "time": "19:00",
+  "guests": 2,
+  "name": "Nguyễn Văn A",
+  "phone": "0901234567",
+  "note": "Bàn gần cửa sổ nếu có"
+}
+
+###
+
+### Đặt bàn 4 người cùng giờ
+POST http://localhost:3000/api/reservations
+Content-Type: application/json
+
+{
+  "restaurant_id": 1,
+  "date": "2026-05-20",
+  "time": "19:00",
+  "guests": 4,
+  "name": "Trần Thị B",
+  "phone": "0912345678",
+  "note": ""
+}
+
+###
+
+### Đặt bàn 6 người
+POST http://localhost:3000/api/reservations
+Content-Type: application/json
+
+{
+  "restaurant_id": 1,
+  "date": "2026-05-20",
+  "time": "20:00",
+  "guests": 6,
+  "name": "Lê Minh C",
+  "phone": "0923456789",
+  "note": "Sinh nhật, cần đặt bánh trước"
+}
+
+###
+
+### Đặt bàn 8 người
+POST http://localhost:3000/api/reservations
+Content-Type: application/json
+
+{
+  "restaurant_id": 1,
+  "date": "2026-05-20",
+  "time": "18:00",
+  "guests": 8,
+  "name": "Phạm Văn D",
+  "phone": "0934567890",
+  "note": "Họp công ty"
+}
+
+###
+
+### Xem tất cả đặt chỗ ngày 20/05/2026
+GET http://localhost:3000/api/reservations?date=2026-05-20&restaurant_id=1
+
+###
+
+### Chi tiết đặt chỗ #1
+GET http://localhost:3000/api/reservations/1
+
+###
+
+### Cập nhật trạng thái → hoàn thành
+PATCH http://localhost:3000/api/reservations/1
+Content-Type: application/json
+
+{
+  "status": "completed"
+}
+
+###
+
+### Huỷ đặt chỗ #2
+DELETE http://localhost:3000/api/reservations/2
+
+###
+
+### Test validation — thiếu trường bắt buộc
+POST http://localhost:3000/api/reservations
+Content-Type: application/json
+
+{
+  "date": "2026-05-20",
+  "time": "19:00"
+}

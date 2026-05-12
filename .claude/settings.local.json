@@ -1,0 +1,37 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node --check src/app.js)",
+      "Bash(node --check src/services/tableAssignment.js)",
+      "Bash(node --check src/controllers/reservationController.js)",
+      "Bash(node --check src/config/database.js)",
+      "Bash(node src/scripts/migrate.js)",
+      "Bash(node src/scripts/seed.js)",
+      "Bash(curl *)",
+      "Bash(node -e ' *)",
+      "Bash(npm install *)",
+      "Bash(npm audit *)",
+      "Bash(npx next *)",
+      "Bash(node src/app.js)",
+      "Bash(npm run *)",
+      "PowerShell(Get-ChildItem -Path \"C:\\\\Users\\\\piopy\\\\Documents\\\\Github\\\\he-thong-dat-ban-tu-dong\" -Force | Select-Object Name, @{Name=\"Type\"; Expression={if \\($_.PSIsContainer\\) {\"Directory\"} else {\"File\"}}} | Sort-Object Name)",
+      "PowerShell(New-Item *)",
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\piopy\\\\Documents\\\\Github\\\\he-thong-dat-ban-tu-dong\" -Force)",
+      "Bash(Select-Object Name, PSIsContainer)",
+      "Bash(node --check src/scripts/migrate.js)",
+      "Bash(node --check src/controllers/restaurantController.js)",
+      "Bash(node --check src/routes/restaurants.js)",
+      "Bash(Remove-Item -Recurse -Force \"C:\\\\Users\\\\piopy\\\\Documents\\\\Github\\\\he-thong-dat-ban-tu-dong\\\\dashboard\\\\.next\" -ErrorAction SilentlyContinue)",
+      "Bash(Write-Host \"Cache cleared\")",
+      "Bash(Write-Host \"cleared\")",
+      "Bash(node -e \"require\\('@dnd-kit/core'\\); require\\('@dnd-kit/sortable'\\); require\\('@dnd-kit/utilities'\\); console.log\\('ok'\\)\")",
+      "Bash(node --max-old-space-size=4096 node_modules/.bin/next build)",
+      "Bash(npm uninstall *)",
+      "Bash(New-Item -ItemType Directory -Force \"C:\\\\Users\\\\piopy\\\\Documents\\\\Github\\\\he-thong-dat-ban-tu-dong\\\\dashboard\\\\src\\\\app\\\\auth\\\\callback\")",
+      "Bash(Out-Null)",
+      "Bash(Get-ChildItem *)",
+      "Bash(supabase --version)",
+      "Bash(Remove-Item *)"
+    ]
+  }
+}

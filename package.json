@@ -1,0 +1,14 @@
+{
+  "name": "he-thong-dat-ban-tu-dong",
+  "version": "1.0.0",
+  "description": "Hệ thống đặt bàn nhà hàng với xếp bàn thông minh",
+  "scripts": {
+    "dev": "npm run dev --prefix dashboard",
+    "build": "npm run build --prefix dashboard",
+    "start": "npm run start --prefix dashboard",
+    "install:all": "npm install --prefix dashboard"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  }
+}
