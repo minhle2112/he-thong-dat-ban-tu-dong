@@ -152,6 +152,8 @@ function DatBanPage() {
   const [restaurant, setRestaurant] = useState(null);
   const [dangTaiNhaHang, setDangTaiNhaHang] = useState(true);
   const [linkKhongHopLe, setLinkKhongHopLe] = useState(false);
+  // Lỗi hệ thống (khác với link không hợp lệ): RLS chặn, mạng lỗi, v.v.
+  const [loiHeThong, setLoiHeThong] = useState('');
 
   // 1 = chọn giờ, 2 = nhập thông tin, 3 = thành công
   const [buoc, setBuoc] = useState(1);
@@ -197,21 +199,27 @@ function DatBanPage() {
     }
 
     // Lấy thông tin nhà hàng (name + settings) trong 1 query
+    // Yêu cầu: bảng restaurants phải có policy public_read_restaurants (migration 009)
     supabase
       .from('restaurants')
       .select('id, name, settings')
       .eq('id', restaurantId)
       .single()
       .then(({ data, error }) => {
-        if (error || !data) {
-          // restaurant_id không tồn tại trong DB
-          setLinkKhongHopLe(true);
+        if (!error && data) {
+          setRestaurant(data);
+          if (data.settings) setSettings(data.settings);
           return;
         }
-        setRestaurant(data);
-        if (data.settings) setSettings(data.settings);
+        // PGRST116 = 0 rows: nhà hàng không tồn tại HOẶC RLS đang chặn anon read
+        // Các lỗi khác (mạng, cấu hình Supabase) → hiện thông báo riêng
+        if (error && error.code !== 'PGRST116') {
+          setLoiHeThong(`Không thể kết nối hệ thống (${error.code || error.message}). Vui lòng thử lại sau.`);
+        } else {
+          setLinkKhongHopLe(true);
+        }
       })
-      .catch(() => setLinkKhongHopLe(true))
+      .catch((e) => setLoiHeThong('Lỗi kết nối mạng. Vui lòng kiểm tra internet và thử lại.'))
       .finally(() => setDangTaiNhaHang(false));
   }, [restaurantId]);
 
@@ -353,6 +361,29 @@ function DatBanPage() {
         <div className="flex flex-col items-center gap-3 text-gray-400">
           <span className="w-8 h-8 border-4 border-gray-200 border-t-amber-400 rounded-full animate-spin" />
           <p className="text-sm">Đang tải...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Lỗi hệ thống (mạng, RLS cấu hình sai, v.v.) — khác với "link không hợp lệ"
+  if (loiHeThong) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50 dark:bg-gray-900 dark:from-gray-900 dark:via-gray-900 dark:to-gray-900 px-4">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-8 max-w-sm w-full text-center space-y-4">
+          <div className="text-5xl">⚠️</div>
+          <h1 className="text-lg font-bold text-gray-800 dark:text-gray-100">
+            Không thể tải trang
+          </h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">
+            {loiHeThong}
+          </p>
+          <button
+            onClick={() => window.location.reload()}
+            className="w-full bg-amber-500 hover:bg-amber-600 text-white font-semibold rounded-xl py-2.5 text-sm transition-colors"
+          >
+            Thử lại
+          </button>
         </div>
       </div>
     );

@@ -248,6 +248,8 @@ Sau khi chạy:
 
 **Trang /dat-ban — validate restaurant_id**: `restaurantId` parse từ `?r=` param, không còn fallback về `1`. Nếu param thiếu hoặc không phải số → `linkKhongHopLe=true` ngay. Fetch trực tiếp Supabase `restaurants.select('id, name, settings').eq('id', restaurantId).single()`; nếu nhà hàng không tồn tại → `linkKhongHopLe=true`. Khi đang fetch → spinner toàn trang. Khi lỗi → trang lỗi riêng với hướng dẫn liên hệ nhà hàng. Header hiện `restaurant.name` thay vì text cứng "Đặt Bàn Online". Tables và reservations cũng fetch trực tiếp từ Supabase client (không qua Express).
 
+**Error handling /dat-ban — phân biệt 2 loại lỗi**: `PGRST116` (0 rows trả về — nhà hàng không tồn tại HOẶC RLS chặn anon read) → `linkKhongHopLe=true`; lỗi khác (mạng, cấu hình Supabase) → `loiHeThong` state → hiện trang "Không thể tải trang" với nút "Thử lại". **Quan trọng**: nếu trang hiện "Link không hợp lệ" dù URL có `?r=` đúng → nguyên nhân là migration 009 chưa chạy (RLS chặn anon read trên bảng `restaurants`). Fix: chạy `migrations/009_public_rls.sql` trong Supabase SQL Editor.
+
 **Migrate backend → Supabase Edge Functions (Phần 9)**: Toàn bộ Express API (`src/`) thay bằng Supabase Edge Functions (Deno/TypeScript) + Supabase JS client. `lib/api.js` được viết lại hoàn toàn — không còn `fetch()` tới localhost:3000.
 
 - **Nhóm A (direct Supabase client)**: getTables, createTable, updateTable, deleteTable, getReservations, updateStatus, cancelReservation, createReservation, getBlockedSlots, createBlockedSlot, deleteBlockedSlot, getSettings, updateSettings, getZones, addZone, deleteZone — dùng `supabase.from(...)` trực tiếp.
