@@ -25,39 +25,47 @@ export function AuthProvider({ children }) {
   }, []);
 
   useEffect(() => {
-    // Khởi động: xử lý ?code= nếu có (Supabase redirect về bất kỳ trang nào sau verify email)
-    // Thường /auth/callback xử lý rồi, nhưng phòng khi Site URL trỏ về homepage
+    // Khởi động: xử lý ?code= OAuth callback nếu Supabase redirect về đây thay vì /auth/callback
     const initAuth = async () => {
-      if (typeof window !== 'undefined') {
-        const params = new URLSearchParams(window.location.search);
-        const code = params.get('code');
-        if (code) {
-          await supabase.auth.exchangeCodeForSession(code);
-          // Xoá code khỏi URL để không xử lý lại khi refresh
-          window.history.replaceState({}, '', window.location.pathname);
+      try {
+        if (typeof window !== 'undefined') {
+          const params = new URLSearchParams(window.location.search);
+          const code = params.get('code');
+          if (code) {
+            await supabase.auth.exchangeCodeForSession(code);
+            // Xoá code khỏi URL để không xử lý lại khi refresh
+            window.history.replaceState({}, '', window.location.pathname);
+          }
         }
-      }
 
-      const { data: { session } } = await supabase.auth.getSession();
-      const u = session?.user ?? null;
-      setUser(u);
-      if (u) await loadRestaurant(u.id);
-      setLoading(false);
+        const { data: { session } } = await supabase.auth.getSession();
+        const u = session?.user ?? null;
+        setUser(u);
+        // setLoading TRƯỚC khi loadRestaurant — không để restaurant query làm block UI
+        // Bug cũ: await loadRestaurant() trước setLoading → nếu query treo thì loading vĩnh viễn
+        setLoading(false);
+        if (u) loadRestaurant(u.id); // fire-and-forget: restaurant load không block auth
+      } catch {
+        // Failsafe: đảm bảo loading kết thúc dù có lỗi bất ngờ
+        setLoading(false);
+      }
     };
 
     initAuth();
 
-    // Lắng nghe thay đổi auth state (login, logout, token refresh)
+    // Lắng nghe thay đổi auth state (login, logout, token refresh, INITIAL_SESSION)
+    // Callback KHÔNG async vì không cần await — setLoading phải chạy ngay lập tức
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      (event, session) => {
         const u = session?.user ?? null;
         setUser(u);
+        // setLoading TRƯỚC loadRestaurant — tránh bug treo màn hình spinner
+        setLoading(false);
         if (u) {
-          await loadRestaurant(u.id);
+          loadRestaurant(u.id); // fire-and-forget
         } else {
           setRestaurant(null);
         }
-        setLoading(false);
       }
     );
 

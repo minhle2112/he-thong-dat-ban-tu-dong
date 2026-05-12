@@ -1,7 +1,5 @@
 {
   "/page": "app/page.js",
   "/login/page": "app/login/page.js",
-  "/nhan-vien/page": "app/nhan-vien/page.js",
-  "/quan-ly-ban/page": "app/quan-ly-ban/page.js",
-  "/settings/page": "app/settings/page.js"
+  "/nhan-vien/page": "app/nhan-vien/page.js"
 }
