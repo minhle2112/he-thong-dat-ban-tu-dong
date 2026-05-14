@@ -7,8 +7,5 @@
     "build": "npm run build --prefix dashboard",
     "start": "npm run start --prefix dashboard",
     "install:all": "npm install --prefix dashboard"
-  },
-  "devDependencies": {
-    "concurrently": "^9.2.1"
   }
 }

@@ -1,7 +1,6 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
 
 // Giá trị mặc định khi chưa tải được settings
@@ -134,19 +133,9 @@ function taoMa(id) {
 
 // ─── Component chính ────────────────────────────────────────────────────────
 
-export default function DatBanPageWrapper() {
-  return (
-    <Suspense>
-      <DatBanPage />
-    </Suspense>
-  );
-}
-
-function DatBanPage() {
-  const searchParams = useSearchParams();
-  // Lấy restaurant_id từ URL param ?r=... — không có fallback vì phải validate
-  const rParam = searchParams.get('r');
-  const restaurantId = rParam ? parseInt(rParam, 10) : null;
+// App chỉ có 1 nhà hàng — không cần ?r= param nữa
+export default function DatBanPage() {
+  const restaurantId = 1;
 
   // Thông tin nhà hàng (tên hiển thị)
   const [restaurant, setRestaurant] = useState(null);
@@ -191,15 +180,7 @@ function DatBanPage() {
 
   // Tải thông tin nhà hàng và settings khi mount
   useEffect(() => {
-    // Thiếu hoặc không phải số hợp lệ → báo lỗi ngay
-    if (!restaurantId || isNaN(restaurantId)) {
-      setLinkKhongHopLe(true);
-      setDangTaiNhaHang(false);
-      return;
-    }
-
     // Lấy thông tin nhà hàng (name + settings) trong 1 query
-    // Yêu cầu: bảng restaurants phải có policy public_read_restaurants (migration 009)
     supabase
       .from('restaurants')
       .select('id, name, settings')
@@ -389,17 +370,17 @@ function DatBanPage() {
     );
   }
 
-  // Link không hợp lệ hoặc nhà hàng không tồn tại
+  // Nhà hàng chưa được cài đặt trong hệ thống
   if (linkKhongHopLe) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50 dark:bg-gray-900 dark:from-gray-900 dark:via-gray-900 dark:to-gray-900 px-4">
         <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-8 max-w-sm w-full text-center space-y-4">
-          <div className="text-5xl">🔗</div>
+          <div className="text-5xl">🍽️</div>
           <h1 className="text-lg font-bold text-gray-800 dark:text-gray-100">
-            Link không hợp lệ
+            Chưa có dữ liệu nhà hàng
           </h1>
           <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">
-            Vui lòng liên hệ nhà hàng để lấy link đặt bàn chính xác.
+            Hệ thống chưa được cài đặt. Vui lòng liên hệ quản trị viên.
           </p>
         </div>
       </div>

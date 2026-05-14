@@ -31,7 +31,8 @@
       "Bash(Out-Null)",
       "Bash(Get-ChildItem *)",
       "Bash(supabase --version)",
-      "Bash(Remove-Item *)"
+      "Bash(Remove-Item *)",
+      "Bash(Write-Host \"Done\")"
     ]
   }
 }

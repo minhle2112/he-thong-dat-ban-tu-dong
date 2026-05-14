@@ -1,5 +1,8 @@
 {
+  "/_not-found/page": "app/_not-found/page.js",
+  "/dat-ban/page": "app/dat-ban/page.js",
   "/page": "app/page.js",
-  "/login/page": "app/login/page.js",
-  "/nhan-vien/page": "app/nhan-vien/page.js"
+  "/nhan-vien/page": "app/nhan-vien/page.js",
+  "/settings/page": "app/settings/page.js",
+  "/quan-ly-ban/page": "app/quan-ly-ban/page.js"
 }

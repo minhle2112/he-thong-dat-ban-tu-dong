@@ -216,13 +216,12 @@ export default function SettingsPage() {
 
 function SettingsContent() {
   const { theme, toggleTheme } = useTheme();
-  const { restaurantId, restaurant, user, signOut } = useAuth();
-  const [confirmLogout, setConfirmLogout] = useState(false);
+  const { restaurantId, restaurant } = useAuth();
   const [copied, setCopied] = useState(false);
 
-  // URL đặt bàn công khai của nhà hàng này
-  const reservationUrl = typeof window !== 'undefined' && restaurantId
-    ? `${window.location.origin}/dat-ban?r=${restaurantId}`
+  // URL đặt bàn — không cần ?r= nữa vì app chỉ có 1 nhà hàng
+  const reservationUrl = typeof window !== 'undefined'
+    ? `${window.location.origin}/dat-ban`
     : '';
 
   async function copyLink() {
@@ -504,29 +503,7 @@ function SettingsContent() {
               </div>
             </section>
 
-            {/* ── 4. Tài Khoản ────────────────────────────────────────── */}
-            <section className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 p-5 space-y-4">
-              <h2 className="font-semibold text-gray-900 dark:text-gray-100">👤 Tài Khoản</h2>
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-500 dark:text-gray-400">Nhà hàng</span>
-                  <span className="text-sm font-medium text-gray-800 dark:text-gray-200">{restaurant?.name || '—'}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-500 dark:text-gray-400">Email</span>
-                  <span className="text-sm font-medium text-gray-800 dark:text-gray-200">{user?.email || '—'}</span>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setConfirmLogout(true)}
-                className="w-full border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 font-medium rounded-xl py-2.5 text-sm transition-colors"
-              >
-                Đăng xuất
-              </button>
-            </section>
-
-            {/* ── 5. Lịch khung giờ ───────────────────────────────────── */}
+            {/* ── 4. Lịch khung giờ ───────────────────────────────────── */}
             <section className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 p-5 space-y-4">
               <div className="flex items-center justify-between">
                 <div>
@@ -592,33 +569,6 @@ function SettingsContent() {
         </div>
       )}
 
-      {/* ── Xác nhận đăng xuất ──────────────────────────────────────── */}
-      {confirmLogout && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 max-w-sm w-full space-y-4">
-            <h3 className="font-bold text-gray-900 dark:text-gray-100 text-lg">Đăng xuất?</h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              Bạn sẽ cần đăng nhập lại để tiếp tục sử dụng hệ thống.
-            </p>
-            <div className="flex gap-3">
-              <button
-                type="button"
-                onClick={() => setConfirmLogout(false)}
-                className="flex-1 border border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300 rounded-xl py-2.5 text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-              >
-                Hủy
-              </button>
-              <button
-                type="button"
-                onClick={signOut}
-                className="flex-1 bg-red-600 hover:bg-red-700 text-white rounded-xl py-2.5 text-sm font-medium transition-colors"
-              >
-                Đăng xuất
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
