@@ -1,3 +1,7 @@
 {
-  "/page": "app/page.js"
+  "/dat-ban/page": "app/dat-ban/page.js",
+  "/nhan-vien/page": "app/nhan-vien/page.js",
+  "/page": "app/page.js",
+  "/quan-ly-ban/page": "app/quan-ly-ban/page.js",
+  "/settings/page": "app/settings/page.js"
 }

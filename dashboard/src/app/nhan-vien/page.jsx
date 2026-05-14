@@ -82,8 +82,8 @@ function tinhConLai(dateStr, timeStr) {
   return { text, past, urgent };
 }
 
-// Kiểm tra số điện thoại Việt Nam hợp lệ (10 số, bắt đầu bằng 0)
-const validSDT = (phone) => /^0\d{9}$/.test(phone.replace(/\s/g, ''));
+// Chấp nhận bất kỳ số điện thoại nào, chỉ cần không rỗng
+const validSDT = (phone) => phone.trim().length > 0;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Hằng số UI
@@ -245,7 +245,7 @@ function AppNhanVien() {
 
     // Validate bắt buộc
     if (!tdcTen.trim()) { setTdcLoi('Vui lòng nhập họ tên khách.'); return; }
-    if (!validSDT(tdcPhone)) { setTdcLoi('Số điện thoại không hợp lệ (VD: 0912345678).'); return; }
+    if (!validSDT(tdcPhone)) { setTdcLoi('Vui lòng nhập số điện thoại.'); return; }
     if (!tdcGio) { setTdcLoi('Vui lòng nhập giờ đặt.'); return; }
 
     // Validate giờ nếu chọn hôm nay: không cho nhập giờ đã qua
@@ -568,16 +568,10 @@ function AppNhanVien() {
               <input
                 type="tel"
                 value={tdcPhone}
-                onChange={e => setTdcPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
-                placeholder="0912345678"
+                onChange={e => setTdcPhone(e.target.value)}
+                placeholder="Nhập số điện thoại"
                 className="w-full border border-gray-300 rounded-2xl px-5 py-4 text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
-              {/* Cảnh báo inline nếu SĐT đã nhập nhưng chưa hợp lệ */}
-              {tdcPhone.length > 0 && !validSDT(tdcPhone) && (
-                <p className="text-xs text-orange-600 mt-1.5">
-                  ⚠️ SĐT phải đủ 10 số, bắt đầu bằng 0 (VD: 0912345678)
-                </p>
-              )}
             </div>
 
             {/* Ngày + Giờ — 2 cột trên iPad */}

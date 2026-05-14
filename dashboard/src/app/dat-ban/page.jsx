@@ -120,10 +120,9 @@ function formatNgay(dateStr) {
   });
 }
 
-// Validate số điện thoại Việt Nam (đầu 03x, 05x, 07x, 08x, 09x)
+// Chấp nhận bất kỳ số điện thoại nào, chỉ cần không rỗng
 function kiemTraSDT(sdt) {
-  const chuanHoa = sdt.replace(/[\s\-\.]/g, '');
-  return /^(0[35789]\d{8}|84[35789]\d{8}|\+84[35789]\d{8})$/.test(chuanHoa);
+  return sdt.trim().length > 0;
 }
 
 // Tạo mã đặt chỗ từ ID
@@ -268,7 +267,7 @@ export default function DatBanPage() {
       return;
     }
     if (!kiemTraSDT(dienThoai)) {
-      setLoi('Số điện thoại không đúng định dạng Việt Nam (vd: 0901234567).');
+      setLoi('Vui lòng nhập số điện thoại.');
       return;
     }
 
