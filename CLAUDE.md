@@ -185,7 +185,9 @@ Sau khi chạy:
 
 **Tính trạng thái bàn**: Logic nằm ở `utils/tableStatus.js`, trả về `available / reserved / occupied / blocked`. `occupied` = đặt chỗ status `seated` hoặc đang trong khung giờ (nếu là ngày hôm nay).
 
-**Sơ đồ bàn dashboard (/)**: `TableMap` nhận thêm prop `selectedDate` để tính `isToday`. Khi `isToday=true`, mỗi ô bàn hiện thêm thông tin động: bàn `occupied` → tên khách (họ cuối) + "Từ HH:MM" (thay nhãn "Có khách"); bàn `available` có đặt sắp tới → "HH:MM · còn X phút" (thay nhãn "Trống"); bàn `reserved` → GIỮ nhãn "Đã xếp bàn" + thêm dòng "HH:MM · còn X phút" bên dưới. Màu vàng nếu > 30 phút, đỏ nếu < 30 phút. Thời gian được cập nhật mỗi 60 giây qua `setInterval` trong `TableMap`. Legend đã bỏ trạng thái "Chặn". Tóm tắt nhanh dưới sơ đồ cũng bỏ mục "Chặn".
+**Giữ ngày khi chuyển tab**: `selectedDate` trong `useDashboard.js` được lưu vào `sessionStorage` (key `_dashboard_selected_date`) mỗi khi thay đổi, và đọc lại khi hook khởi tạo. Tránh reset về hôm nay khi navigate ra ngoài rồi quay lại dashboard. `setSelectedDate` bọc bởi `useCallback` để đồng thời gọi `sessionStorage.setItem`. Nút "Hôm nay" trong header dashboard ẩn đi khi đang xem hôm nay, hiện lại khi xem ngày khác để reset nhanh.
+
+**Sơ đồ bàn dashboard (/)**: `TableMap` nhận prop `selectedDate` để tính `isToday`. Mỗi ô bàn hiện **tất cả đặt chỗ** trong ngày (confirmed + seated), sắp xếp theo giờ tăng dần, tối đa 2 dòng rồi hiện "+X nữa". Mỗi dòng: `HH:MM · Tên ngắn · Xng`. Màu chữ theo trạng thái: `seated` → trắng; `confirmed` thường → vàng nhạt (`text-yellow-100`); `confirmed` < 30 phút (hôm nay) → đỏ nhạt (`text-red-200`). Bàn không có đặt chỗ → hiện nhãn trạng thái mặc định. Thời gian được cập nhật mỗi 60 giây. Legend đã bỏ trạng thái "Chặn".
 
 **Chặn bàn đã bỏ khỏi dashboard**: `TableDetailModal` không còn hiện form chặn bàn, danh sách blocked slots, hay nút "Bỏ chặn". Các prop `blockedSlots`, `onBlock`, `onUnblock` đã xóa khỏi modal. Dữ liệu `blocked_slots` vẫn được dùng trong `useDashboard.js` để tính `tableStatuses` (bàn inactive vẫn hiện màu xám), nhưng không có UI để tạo/xóa blocked slots trên dashboard nữa.
 
@@ -201,7 +203,7 @@ Sau khi chạy:
 
 **Ghép bàn trong /nhan-vien**: Modal xếp bàn có 2 tab — "Bàn đơn" (chọn 1 bàn từ `goiY.single`) và "Ghép bàn" (chọn nhiều bàn, hiện tổng sức chứa). Backend `getSuggestions` trả về `groups` (mảng `{ tables, total_capacity, zone, same_zone, waste }`) **chỉ khi** `single` rỗng. Tab Ghép bàn hiện gợi ý nhanh từ `groups` + danh sách checkbox tất cả bàn active cho chọn thủ công. Tự động chuyển sang tab Ghép bàn nếu `single.length === 0`. Submit gọi `api.assignTable(id, tableIds)` với mảng 1 hoặc nhiều id.
 
-**Không có auth thực**: Dashboard (`/`) và trang đặt bàn (`/dat-ban`) đều public. Trang nhân viên (`/nhan-vien`) chỉ có PIN đơn giản — không phải session server-side.
+**Hệ thống đăng nhập username/password (thay Supabase Auth)**: Dashboard bảo vệ bằng credentials cố định lưu trong env vars (`NEXT_PUBLIC_ADMIN_USERNAME`, `NEXT_PUBLIC_ADMIN_PASSWORD`). Token = `btoa("user:pass")` lưu vào `localStorage` — đổi password trong env thì token cũ tự hết hạn. Logic auth tập trung ở `dashboard/src/lib/auth.js` (4 hàm: `checkCredentials`, `saveToken`, `clearToken`, `isAuthenticated`). Trang `/login` (`dashboard/src/app/login/page.jsx`) xử lý form đăng nhập. `ProtectedPage` component redirect về `/login` nếu token không hợp lệ. Các trang được bảo vệ: `/`, `/nhan-vien`, `/quan-ly-ban`, `/settings`. Trang `/dat-ban` vẫn public. Nút "Đăng xuất" trong `/settings` gọi `clearToken()` rồi `router.replace('/login')`. PIN cũ trên `/nhan-vien` đã xóa hoàn toàn.
 
 **Tab "Chờ xếp bàn" trên /nhan-vien**: Fetch riêng `GET /reservations?status=pending` (không lọc ngày) song song với fetch hôm nay. Badge đỏ nếu có pending trong vòng 2 tiếng. `api.getReservations` hỗ trợ thêm param `status` sau thay đổi này.
 

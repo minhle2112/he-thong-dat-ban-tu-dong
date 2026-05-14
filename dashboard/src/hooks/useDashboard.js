@@ -11,8 +11,23 @@ function todayStr() {
   return `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, '0')}-${String(n.getDate()).padStart(2, '0')}`;
 }
 
+// Key lưu ngày đang xem vào sessionStorage để giữ nguyên khi chuyển giữa các trang
+const SESSION_DATE_KEY = '_dashboard_selected_date';
+
+// Đọc ngày cuối cùng từ sessionStorage (SSR-safe), fallback về hôm nay
+function getInitialDate() {
+  if (typeof window === 'undefined') return todayStr();
+  return sessionStorage.getItem(SESSION_DATE_KEY) || todayStr();
+}
+
 export function useDashboard(restaurantId = 1) {
-  const [selectedDate,   setSelectedDate]   = useState(todayStr);
+  const [selectedDate, _setSelectedDate] = useState(getInitialDate);
+
+  // Bọc setter để tự động lưu ngày vào sessionStorage mỗi khi thay đổi
+  const setSelectedDate = useCallback((date) => {
+    sessionStorage.setItem(SESSION_DATE_KEY, date);
+    _setSelectedDate(date);
+  }, []);
   const [tables,         setTables]         = useState([]);
   const [reservations,   setReservations]   = useState([]);
   const [blockedSlots,   setBlockedSlots]   = useState([]);

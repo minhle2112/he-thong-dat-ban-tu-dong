@@ -7,7 +7,6 @@ import NavBar from '../../components/NavBar';
 import ProtectedPage from '../../components/ProtectedPage';
 import { useAuth } from '../../contexts/AuthContext';
 
-const STAFF_PIN = process.env.NEXT_PUBLIC_STAFF_PIN || '1234';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers
@@ -101,69 +100,10 @@ const BADGE = {
 };
 
 // ═════════════════════════════════════════════════════════════════════════════
-// MÀN HÌNH NHẬP PIN
-// ═════════════════════════════════════════════════════════════════════════════
-
-function ManHinhPIN({ onSuccess }) {
-  const [pin, setPin] = useState('');
-  const [sai, setSai] = useState(false);
-
-  const bam = (so) => {
-    if (pin.length >= 4) return;
-    const pinMoi = pin + so;
-    setPin(pinMoi);
-    setSai(false);
-    if (pinMoi.length === 4) {
-      if (pinMoi === STAFF_PIN) {
-        sessionStorage.setItem('nv_auth', '1');
-        onSuccess();
-      } else {
-        setSai(true);
-        setTimeout(() => { setPin(''); setSai(false); }, 800);
-      }
-    }
-  };
-
-  const xoa = () => setPin(p => p.slice(0, -1));
-
-  return (
-    <div className="min-h-screen bg-gray-900 flex flex-col items-center justify-center gap-8 px-4">
-      <div className="text-center">
-        <span className="text-5xl">🍽️</span>
-        <h1 className="text-white text-2xl font-bold mt-3">Dành cho Nhân Viên</h1>
-        <p className="text-gray-400 text-sm mt-1">Nhập PIN 4 số để vào</p>
-      </div>
-      <div className="flex gap-5">
-        {[0, 1, 2, 3].map(i => (
-          <div key={i} className={`w-5 h-5 rounded-full transition-all duration-150 ${
-            i < pin.length ? (sai ? 'bg-red-500 scale-110' : 'bg-white scale-110') : 'bg-gray-600'
-          }`} />
-        ))}
-      </div>
-      {sai && <p className="text-red-400 text-sm font-medium -mt-5 animate-pulse">PIN không đúng. Thử lại.</p>}
-      <div className="grid grid-cols-3 gap-3 w-72">
-        {[1, 2, 3, 4, 5, 6, 7, 8, 9, '', 0, '⌫'].map((k, i) => (
-          <button
-            key={i}
-            onClick={() => { if (k === '⌫') xoa(); else if (k !== '') bam(String(k)); }}
-            className={`h-16 rounded-2xl text-2xl font-semibold transition-all active:scale-95 ${
-              k === ''   ? 'invisible' :
-              k === '⌫' ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' :
-                          'bg-gray-800 text-white hover:bg-gray-700'
-            }`}
-          >{k}</button>
-        ))}
-      </div>
-      <p className="text-gray-600 text-xs">PIN mặc định: 1234</p>
-    </div>
-  );
-}
-
-// ═════════════════════════════════════════════════════════════════════════════
 // APP CHÍNH
 // ═════════════════════════════════════════════════════════════════════════════
 
-function AppNhanVien({ onLogout }) {
+function AppNhanVien() {
   const { restaurantId } = useAuth();
   const homNay = localDateStr();
 
@@ -458,12 +398,6 @@ function AppNhanVien({ onLogout }) {
             <span className={`w-2.5 h-2.5 rounded-full ${realtimeOk ? 'bg-green-500 animate-pulse' : 'bg-gray-300'}`} />
             {realtimeOk ? 'Live' : 'Kết nối...'}
           </span>
-          <button
-            onClick={onLogout}
-            className="text-sm text-gray-400 hover:text-gray-700 px-3 py-2 rounded-xl hover:bg-gray-100 transition-colors"
-          >
-            Đăng xuất
-          </button>
         </div>
       </header>
 
@@ -1137,23 +1071,7 @@ function Spinner({ cls = 'border-white' }) {
 export default function NhanVienPage() {
   return (
     <ProtectedPage>
-      <NhanVienContent />
+      <AppNhanVien />
     </ProtectedPage>
   );
-}
-
-function NhanVienContent() {
-  const [daXacThuc, setDaXacThuc] = useState(false);
-
-  useEffect(() => {
-    if (sessionStorage.getItem('nv_auth') === '1') setDaXacThuc(true);
-  }, []);
-
-  const dangXuat = () => {
-    sessionStorage.removeItem('nv_auth');
-    setDaXacThuc(false);
-  };
-
-  if (!daXacThuc) return <ManHinhPIN onSuccess={() => setDaXacThuc(true)} />;
-  return <AppNhanVien onLogout={dangXuat} />;
 }

@@ -46,26 +46,16 @@ function fmtConLai(diffMin) {
 
 // ── Tìm đặt chỗ theo bàn ────────────────────────────────────────
 
-// Đặt chỗ confirmed sắp tới gần nhất của bàn (dùng cho bàn đang trống)
-function getUpcomingReservation(tableId, reservations, nowMin) {
+// Tất cả đặt chỗ confirmed/seated của bàn trong ngày, sắp xếp theo giờ tăng dần
+function getTableReservations(tableId, reservations) {
   return reservations
     .filter(r => {
-      if (r.status !== 'confirmed') return false;
+      if (!['confirmed', 'seated'].includes(r.status)) return false;
       const isMain  = r.table_id === tableId;
       const isGroup = Array.isArray(r.group_table_ids) && r.group_table_ids.includes(tableId);
-      if (!isMain && !isGroup) return false;
-      return toMin(r.time) > nowMin; // chỉ lấy đặt chỗ chưa bắt đầu
+      return isMain || isGroup;
     })
-    .sort((a, b) => toMin(a.time) - toMin(b.time))[0] || null;
-}
-
-// Đặt chỗ đang hoạt động của bàn (trạng thái seated — khách đang ngồi)
-function getCurrentReservation(tableId, reservations) {
-  return reservations.find(r => {
-    if (r.status !== 'seated') return false;
-    if (r.table_id === tableId) return true;
-    return Array.isArray(r.group_table_ids) && r.group_table_ids.includes(tableId);
-  }) || null;
+    .sort((a, b) => toMin(a.time) - toMin(b.time));
 }
 
 /**
@@ -98,72 +88,61 @@ function buildGroupMap(reservations, tables) {
 
 // ── Card một bàn ─────────────────────────────────────────────────
 
-function TableCard({ table, status, isSelected, onClick, groupInfo, upcomingReservation, currentReservation, nowMin, isToday }) {
+// Tối đa 2 đặt chỗ hiện trực tiếp, phần còn lại hiện "+X nữa"
+const MAX_SHOW = 2;
+
+function TableCard({ table, status, isSelected, onClick, groupInfo, tableReservations, nowMin, isToday }) {
   const isGrouped = !!groupInfo;
 
-  // Thông tin thêm hiển thị bên dưới tên + sức chứa
-  let extraInfo = null;
+  // Tên ngắn: lấy từ cuối (họ cuối trong tiếng Việt)
+  const shortName = (name) => (name || '').split(' ').pop() || name || '';
 
-  if (status === 'occupied' && currentReservation) {
-    // Bàn có khách đang ngồi: thay nhãn "Có khách" bằng tên ngắn + giờ bắt đầu
-    const tenNgan = currentReservation.name?.split(' ').pop() || currentReservation.name;
-    extraInfo = (
-      <>
-        <p className="text-[10px] opacity-95 mt-1 truncate font-semibold leading-tight">{tenNgan}</p>
-        <p className="text-[10px] opacity-65">Từ {fmtGio(currentReservation.time)}</p>
-      </>
-    );
-  } else if (status === 'available' && isToday && upcomingReservation) {
-    // Bàn trống nhưng có đặt chỗ sắp tới: thay nhãn "Trống" bằng thời gian
-    const startMin = toMin(upcomingReservation.time);
-    const diffMin  = startMin - nowMin;
-    if (diffMin > 0) {
-      // Dưới 30 phút → đỏ để nhắc nhân viên chuẩn bị bàn
-      const isUrgent = diffMin < 30;
-      extraInfo = (
-        <p className={`text-[10px] mt-1 font-semibold leading-tight ${isUrgent ? 'text-red-200' : 'text-yellow-100'}`}>
-          {fmtGio(upcomingReservation.time)} · {fmtConLai(diffMin)}
-        </p>
-      );
+  // Màu chữ cho từng dòng đặt chỗ theo trạng thái + thời gian
+  function rowTextColor(r) {
+    if (r.status === 'seated') return 'text-white';
+    // Confirmed sắp đến trong vòng 30 phút → đỏ nhạt để cảnh báo
+    if (isToday) {
+      const diffMin = toMin(r.time) - nowMin;
+      if (diffMin >= 0 && diffMin < 30) return 'text-red-200 font-semibold';
     }
+    return 'text-yellow-100';
   }
 
-  // Bug fix: bàn "Đã xếp" (reserved) cũng cần hiện giờ + thời gian còn lại
-  // nhưng GIỮ nhãn "Đã xếp bàn" ở trên, thêm giờ bên dưới (không thay thế)
-  let reservedExtra = null;
-  if (status === 'reserved' && isToday && upcomingReservation) {
-    const startMin = toMin(upcomingReservation.time);
-    const diffMin  = startMin - nowMin;
-    if (diffMin > 0) {
-      const isUrgent = diffMin < 30;
-      reservedExtra = (
-        <p className={`text-[10px] font-semibold leading-tight ${isUrgent ? 'text-red-200' : 'text-yellow-100'}`}>
-          {fmtGio(upcomingReservation.time)} · {fmtConLai(diffMin)}
-        </p>
-      );
-    }
-  }
+  const shown = tableReservations.slice(0, MAX_SHOW);
+  const extra = tableReservations.length - MAX_SHOW;
 
   return (
     <button
       onClick={() => onClick(table)}
       title={isGrouped ? `Ghép bàn: ${groupInfo.allTableNames}\nKhách: ${groupInfo.guestName}` : undefined}
       className={`
-        relative rounded-xl p-3 text-white text-left transition-all duration-150 cursor-pointer
+        relative rounded-xl p-3 text-white text-left transition-all duration-150 cursor-pointer w-full
         ${STATUS_BG[status] || STATUS_BG.available}
         ${isSelected ? 'ring-2 ring-white ring-offset-2 scale-105 shadow-lg' : 'shadow-sm hover:shadow-md hover:scale-[1.02]'}
         ${isGrouped ? 'ring-1 ring-white/40' : ''}
       `}
     >
-      <p className="font-bold text-sm leading-tight">{table.name}</p>
-      <p className="text-[11px] opacity-80 mt-0.5">{table.capacity} chỗ</p>
+      {/* Tên bàn + sức chứa trên cùng hàng */}
+      <div className="flex items-baseline justify-between gap-1">
+        <p className="font-bold text-sm leading-tight truncate">{table.name}</p>
+        <p className="text-[10px] opacity-70 shrink-0">{table.capacity}c</p>
+      </div>
 
-      {/* Thông tin động: occupied → tên+giờ; available → giờ sắp tới; reserved → nhãn + giờ */}
-      {extraInfo || (
-        <>
-          <p className="text-[10px] opacity-65 mt-1">{STATUS_LABEL[status]}</p>
-          {reservedExtra}
-        </>
+      {/* Danh sách đặt chỗ trong ngày — mỗi dòng: giờ · tên · số người */}
+      {tableReservations.length > 0 ? (
+        <div className="mt-1.5 space-y-0.5">
+          {shown.map(r => (
+            <p key={r.id} className={`text-[10px] leading-snug truncate ${rowTextColor(r)}`}>
+              {fmtGio(r.time)} · {shortName(r.name)} · {r.guests}ng
+            </p>
+          ))}
+          {extra > 0 && (
+            <p className="text-[10px] opacity-55">+{extra} nữa</p>
+          )}
+        </div>
+      ) : (
+        // Không có đặt chỗ → hiện nhãn trạng thái mặc định
+        <p className="text-[10px] opacity-65 mt-1">{STATUS_LABEL[status]}</p>
       )}
 
       {/* Icon xích nếu bàn đang ghép */}
@@ -200,8 +179,7 @@ function ZoneSection({ zone, tables, tableStatuses, selectedTable, onTableClick,
               isSelected={selectedTable?.id === table.id}
               onClick={onTableClick}
               groupInfo={groupMap[table.id] || null}
-              upcomingReservation={getUpcomingReservation(table.id, reservations, nowMin)}
-              currentReservation={getCurrentReservation(table.id, reservations)}
+              tableReservations={getTableReservations(table.id, reservations)}
               nowMin={nowMin}
               isToday={isToday}
             />
@@ -229,14 +207,13 @@ export default function TableMap({ tables, tableStatuses, selectedTable, onTable
   // Map bàn ghép để hiện icon xích
   const groupMap = buildGroupMap(reservations, tables);
 
-  // Nhóm bàn theo zone và sắp xếp
+  // Nhóm bàn theo zone — giữ thứ tự xuất hiện lần đầu (theo created_at từ API)
   const zones = [];
   const zoneMap = {};
   for (const t of tables) {
     if (!zoneMap[t.zone]) { zoneMap[t.zone] = []; zones.push(t.zone); }
     zoneMap[t.zone].push(t);
   }
-  zones.sort();
 
   return (
     <div>

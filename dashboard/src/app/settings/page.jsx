@@ -1,11 +1,13 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import NavBar from '../../components/NavBar';
 import { useTheme } from '../../contexts/ThemeContext';
 import { api } from '../../lib/api';
 import ProtectedPage from '../../components/ProtectedPage';
 import { useAuth } from '../../contexts/AuthContext';
+import { clearToken } from '../../lib/auth';
 
 // Ngày trong tuần (getDay() → 0=CN, 1=T2, ..., 6=T7)
 const NGAY_TRONG_TUAN = [
@@ -215,8 +217,15 @@ export default function SettingsPage() {
 }
 
 function SettingsContent() {
+  const router = useRouter();
   const { theme, toggleTheme } = useTheme();
   const { restaurantId, restaurant } = useAuth();
+
+  // Đăng xuất: xóa token và về trang login
+  function handleLogout() {
+    clearToken();
+    router.replace('/login');
+  }
   const [copied, setCopied] = useState(false);
 
   // URL đặt bàn — không cần ?r= nữa vì app chỉ có 1 nhà hàng
@@ -503,7 +512,27 @@ function SettingsContent() {
               </div>
             </section>
 
-            {/* ── 4. Lịch khung giờ ───────────────────────────────────── */}
+            {/* ── 4. Đăng xuất ────────────────────────────────────────── */}
+            <section className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 p-5">
+              <h2 className="font-semibold text-gray-900 dark:text-gray-100 mb-4">🔒 Tài Khoản</h2>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Đăng xuất khỏi hệ thống</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                    Xóa phiên đăng nhập, cần nhập lại mật khẩu để vào lại
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  className="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-700 hover:bg-red-100 dark:hover:bg-red-900/40 rounded-lg px-4 py-2 text-sm font-medium transition-colors"
+                >
+                  Đăng xuất
+                </button>
+              </div>
+            </section>
+
+            {/* ── 5. Lịch khung giờ ───────────────────────────────────── */}
             <section className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 p-5 space-y-4">
               <div className="flex items-center justify-between">
                 <div>

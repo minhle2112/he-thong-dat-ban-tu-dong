@@ -43,6 +43,11 @@ function DashboardContent() {
     weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric',
   });
 
+  // Tính ngày hôm nay theo local timezone để kiểm tra nút "Hôm nay"
+  const n = new Date();
+  const todayDate = `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, '0')}-${String(n.getDate()).padStart(2, '0')}`;
+  const isViewingToday = selectedDate === todayDate;
+
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
       {/* ── Header ────────────────────────────────────────────────── */}
@@ -57,8 +62,18 @@ function DashboardContent() {
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           <RealtimeDot status={realtimeStatus} />
+          {/* Nút "Hôm nay" — ẩn khi đang xem hôm nay */}
+          {!isViewingToday && (
+            <button
+              type="button"
+              onClick={() => setSelectedDate(todayDate)}
+              className="text-sm text-blue-600 border border-blue-200 rounded-lg px-3 py-1.5 hover:bg-blue-50 transition-colors"
+            >
+              Hôm nay
+            </button>
+          )}
           <input
             type="date"
             value={selectedDate}

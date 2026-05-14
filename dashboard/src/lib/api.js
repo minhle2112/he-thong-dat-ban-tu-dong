@@ -52,7 +52,7 @@ export const api = {
   getTables: async (restaurantId = 1) =>
     sq(supabase.from('tables').select('*')
       .eq('restaurant_id', restaurantId)
-      .order('zone').order('name')),
+      .order('created_at')),
 
   /** Tạo bàn: kiểm tra tên trùng trước rồi INSERT */
   createTable: async (restaurantId, { name, capacity, zone, status = 'active' }) => {
@@ -153,9 +153,85 @@ export const api = {
   getSuggestions: (id) =>
     invokeEdge('get-suggestions', { reservation_id: id }),
 
-  /** Xếp bàn / ghép bàn (Edge Function — có overlap check) */
-  assignTable: (id, tableIds) =>
-    invokeEdge('assign-table', { reservation_id: id, table_ids: tableIds }),
+  /** Xếp bàn / ghép bàn — dùng Supabase client trực tiếp (không qua Edge Function) */
+  assignTable: async (id, tableIds) => {
+    const toMin = (t) => { const [h, m] = (t || '00:00').split(':').map(Number); return h * 60 + m; };
+
+    // Lấy thông tin đặt chỗ
+    const { data: reservation, error: resErr } = await supabase
+      .from('reservations').select('*').eq('id', id).single();
+    if (resErr || !reservation) throw new Error('Không tìm thấy đặt chỗ');
+    if (!['pending', 'confirmed'].includes(reservation.status)) {
+      throw new Error('Không thể xếp bàn ở trạng thái này');
+    }
+
+    // Lấy thông tin các bàn được chọn
+    const { data: tables, error: tablesErr } = await supabase
+      .from('tables').select('*').in('id', tableIds);
+    if (tablesErr) throw tablesErr;
+    if (!tables || tables.length !== tableIds.length) {
+      throw new Error('Một số bàn không tồn tại');
+    }
+
+    // Kiểm tra tổng sức chứa
+    const totalCapacity = tables.reduce((s, t) => s + t.capacity, 0);
+    if (totalCapacity < reservation.guests) {
+      throw new Error(`Tổng sức chứa ${totalCapacity} không đủ cho ${reservation.guests} khách`);
+    }
+
+    // Lấy duration từ settings nhà hàng
+    const { data: restaurant } = await supabase
+      .from('restaurants').select('settings').eq('id', reservation.restaurant_id || 1).single();
+    const duration = restaurant?.settings?.duration_minutes ?? 90;
+
+    const newStart = toMin(reservation.time);
+    const newEnd   = newStart + duration;
+
+    // Kiểm tra từng bàn — overlap chính xác, không cộng buffer
+    // Lý do: 19:30 + 90 phút = 21:00, khách tiếp theo đặt đúng 21:00 phải được phép
+    // Buffer chỉ dùng trên trang /dat-ban (đặt online), không áp dụng khi staff xếp tay
+    for (const table of tables) {
+      const { data: existing } = await supabase
+        .from('reservations')
+        .select('time')
+        .eq('table_id', table.id)
+        .eq('date', reservation.date)
+        .in('status', ['confirmed', 'seated'])
+        .neq('id', id);
+
+      for (const r of existing ?? []) {
+        const rStart = toMin(r.time);
+        const rEnd   = rStart + duration;
+        // newStart < rEnd AND newEnd > rStart → thực sự chồng nhau
+        if (newStart < rEnd && newEnd > rStart) {
+          throw new Error(`Bàn ${table.name} đã có đặt chỗ trong khung giờ này`);
+        }
+      }
+    }
+
+    // Gán bàn chính và chuyển trạng thái sang confirmed
+    const primaryTableId = tableIds[0];
+    const { data: updated, error: updateErr } = await supabase
+      .from('reservations')
+      .update({ table_id: primaryTableId, status: 'confirmed' })
+      .eq('id', id)
+      .select(RES_SELECT)
+      .single();
+    if (updateErr) throw updateErr;
+
+    // Cập nhật table_groups cho ghép bàn
+    if (tableIds.length > 1) {
+      const { error: groupErr } = await supabase
+        .from('table_groups')
+        .upsert({ reservation_id: id, table_ids: tableIds }, { onConflict: 'reservation_id' });
+      if (groupErr) throw groupErr;
+    } else {
+      // Bàn đơn: xóa nhóm ghép cũ nếu có
+      await supabase.from('table_groups').delete().eq('reservation_id', id);
+    }
+
+    return flatRes(updated);
+  },
 
   /** Đổi bàn (Edge Function) */
   changeTable: (id, tableId) =>

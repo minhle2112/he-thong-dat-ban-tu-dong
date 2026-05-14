@@ -355,8 +355,11 @@ function TableForm({ zones, editingTable, onSubmit, onCancel }) {
 }
 
 // ── Bảng danh sách bàn ────────────────────────────────────────────────────────
-function TableList({ tables, loading, onEdit, onDelete, selectedIds, onToggle, onToggleZone }) {
-  const zones = [...new Set(tables.map(t => t.zone))].sort();
+function TableList({ tables, zones: zoneDefs, loading, onEdit, onDelete, selectedIds, onToggle, onToggleZone }) {
+  // Dùng thứ tự khu từ API để tránh sắp xếp theo chữ cái
+  const zones = zoneDefs?.length > 0
+    ? zoneDefs.map(z => z.name)
+    : [...new Set(tables.map(t => t.zone))];
 
   if (loading) {
     return (
@@ -702,6 +705,7 @@ function QuanLyBanContent() {
           </div>
           <TableList
             tables={tables}
+            zones={zones}
             loading={loadingTables}
             onEdit={setEditingTable}
             onDelete={handleDeleteTable}
